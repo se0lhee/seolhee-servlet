@@ -1,6 +1,7 @@
-package com.seolhee.book.servlets;
+package com.seolhee.book.chap11.servlets;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.naming.NamingException;
 import javax.servlet.ServletException;
@@ -11,13 +12,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.seolhee.book.chap11.dao.DaoException;
 import com.seolhee.book.chap11.dao.Member;
 import com.seolhee.book.chap11.dao.MemberDao;
 import com.seolhee.book.chap11.dao.MemberDaoImpl;
 
-@WebServlet("/register/step3")
-public class RegisterStep3Servlet extends HttpServlet {
+@WebServlet("/members")
+public class MemberListServlet extends HttpServlet {
 
 	MemberDao memberDao = null;
 
@@ -37,23 +37,28 @@ public class RegisterStep3Servlet extends HttpServlet {
 	}
 
 	@Override
-	public void doPost(HttpServletRequest request, HttpServletResponse response)
+	public void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		String email = request.getParameter("email");
-		String password = request.getParameter("password");
-		String name = request.getParameter("name");
 
-		// 회원정보 저장
-		Member member = new Member(email, password, name);
-		try {
-			memberDao.insert(member);
-			logger.debug("회원 정보를 저장했습니다. {}", member);
-			request.getRequestDispatcher("/WEB-INF/jsp/register/step3.jsp")
-					.forward(request, response);
-		} catch (DaoException e) {
+		int page = 1;
+		try { // 가져올 페이지 수
+			page = Integer.parseInt(request.getParameter("page"));
+		} catch (NumberFormatException e) {
 			logger.error(e.getMessage());
-			request.getRequestDispatcher("/WEB-INF/jsp/register/step2.jsp")
-					.forward(request, response);
 		}
+
+		// 페이지 당 가져오는 행의 수
+		final int COUNT = 100;
+		// 시작점
+		int offset = (page - 1) * COUNT;
+
+		List<Member> memberList = memberDao.selectAll(offset, COUNT);
+
+		int totalCount = memberDao.countAll();
+
+		request.setAttribute("totalCount", totalCount);
+		request.setAttribute("members", memberList);
+		request.getRequestDispatcher("/WEB-INF/jsp/members.jsp")
+				.forward(request, response);
 	}
 }

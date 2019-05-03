@@ -1,4 +1,4 @@
-package com.seolhee.book.servlets;
+package com.seolhee.book.chap11.servlets;
 
 import java.io.IOException;
 
